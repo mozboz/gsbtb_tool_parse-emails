@@ -5,11 +5,7 @@ import csv
 #from StringIO import StringIO as IO
 import re
 
-#subjectsToParse = ['Project Application', 'New Project', 'New Expat', 'Expat Contact']
-csvQuoteBehaviour = csv.QUOTE_MINIMAL
-#csvColumns = ['ID', 'date', 'subject', 'labels', '']
-#cgi.cgitb.enable()
-#regexp = re.compile('(.*)\nname: (.*)\nsurname: (.*)\nemail: (.*)\nphone: (.*)\nabout: ([\s\S]*)\nrelation: (.*)\nrelationname: (.*)')
+csvQuoteBehaviour = csv.QUOTE_ALL # alternative: csv.QUOTE_MINIMAL
 
 configuration = {
     'Project Application': {
@@ -28,9 +24,9 @@ configuration = {
     },
     'New Expat': {
         'regexp': [
-            re.compile('(.*)\nname: (.*)\nsurname: (.*)\nemail: (.*)\nphone: (.*)\nwebsite: (.*)\ngerman-skills: (.*)[\nsex: ]*(.*)\nabout: ([\s\S]*)\nidea: ([\s\S]*)')],
+            re.compile('(.*)\nname: (.*)\nsurname: (.*)\nemail: (.*)\nphone: (.*)\nwebsite: (.*)\ngerman-skills: (.*)[\nsex: ]*(.*)\nabout: ([\s\S]*)\nidea: ([\s\S]*)\n\*')],
         'first_result': 2,
-        'last_result': 9,
+        'last_result': 10,
         'file_name': 'new-expat.csv',
         'header': ['ID', 'date', 'subject', 'labels', 'name', 'surname', 'email', 'phone', 'website', 'sex (optional)', 'about', 'idea']
     },
@@ -57,7 +53,7 @@ def message_body(message, config):
     for regexp in config['regexp']:
         result = regexp.search(content)
         if result:
-            return [result.group(index).strip() for index in range(config['first_result'], config['last_result'])]
+            return [result.group(index).strip() for index in range(config['first_result'], config['last_result']+1)]
     print "Could not parse content. Config/message"
     print config
     print message
@@ -86,6 +82,8 @@ def to_cvs(inboxFile):
 
     for message in inbox:
         count_total += 1
+        if count_total % 100 == 0:
+            print count_total
         message_type = make_it_utf8(message['subject'])
         if message_type in configuration:
             config = configuration[message_type]

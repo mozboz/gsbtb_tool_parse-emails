@@ -4,6 +4,7 @@ inboxFile = './Takeout/Mail/Incoming Monthly-2017-January.mbox'
 
 parse.to_cvs(inboxFile)
 
+# test message body parser:
 #import mailbox
 #inbox = mailbox.mbox(inboxFile)
 #message = inbox[0]
