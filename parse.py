@@ -11,14 +11,14 @@ configuration = {
     'Project Application': {
         'regexp': [re.compile('(.*)\nname: (.*)\nsurname: (.*)\nemail: (.*)\nphone: (.*)\nabout: ([\s\S]*)\nrelation: (.*)\nrelationname: (.*)')],
         'first_result': 2,
-        'last_result': 7,
+        'last_result': 8,
         'file_name': 'project-applications.csv',
         'header': ['ID', 'date', 'subject', 'labels', 'name', 'surname', 'email', 'phone', 'about', 'relation', 'relationname']
     },
     'New Project': {
         'regexp': [re.compile('(.*)\nname: (.*)\naddress: (.*)\nphone: (.*)\ncontact: (.*)\nemail: (.*)\nwebsite: (.*)\nabout: ([\s\S]*)\ntask-description: ([\s\S]*)\nwhen: (.*)\nrequirements: (.*)\ngerman-skills: (.*)\nsex: (.*)')],
         'first_result': 2,
-        'last_result': 12,
+        'last_result': 13,
         'file_name': 'new-project.csv',
         'header': ['ID', 'date', 'subject', 'labels', 'name', 'address', 'phone', 'contact', 'email', 'website', 'about', 'task-description', 'when', 'reuqirements', 'german-skills', 'sex']
     },
@@ -33,7 +33,7 @@ configuration = {
     'Expat Contact': {
         'regexp': [re.compile('(.*)\nname: (.*)\nemail: (.*)\nphone: (.*)\nmessage: ([\s\S]*)\nrelation: (.*)\nrelationname: (.*)')],
         'first_result': 2,
-        'last_result': 6,
+        'last_result': 7,
         'file_name': 'expat-contact.csv',
         'header': ['ID', 'date', 'subject', 'labels', 'name', 'email', 'phone', 'message', 'relation', 'relationname']
     }
