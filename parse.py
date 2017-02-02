@@ -1,8 +1,7 @@
+import math
 import mailbox
 from email.header import Header, decode_header, make_header
 import csv
-#import cgi
-#from StringIO import StringIO as IO
 import re
 
 csvQuoteBehaviour = csv.QUOTE_ALL # alternative: csv.QUOTE_MINIMAL
@@ -46,19 +45,24 @@ def make_it_utf8(value):
     # but the follow seems to do the job, too
     return ' '.join((item[0].decode(item[1] or 'utf-8').encode('utf-8') for item in decode_header(value)))
 
-def message_body(message, config):
+def message_body(message, config, counts):
     # first item only, ignore multipart attachements
-    content = message.get_payload(0).get_payload(0)
-    content = str(content).replace('\r\n', '\n')
-    for regexp in config['regexp']:
-        result = regexp.search(content)
-        if result:
-            return [result.group(index).strip() for index in range(config['first_result'], config['last_result']+1)]
+    try:
+        content = message.get_payload(0).get_payload(0)
+        content = str(content).replace('\r\n', '\n')
+        for regexp in config['regexp']:
+            result = regexp.search(content)
+            if result:
+                return [result.group(index).strip() for index in range(config['first_result'], config['last_result']+1)]
+    except TypeError:
+        print "Error parsing body of message ID {0}".format(message['message-Id'])
     print "Could not parse content. Config/message"
     print config
     print message
+    counts['error'] += 1
+    return []
 
-def parse(message, config):
+def parse(message, config, counts):
     data = []
 
     # Extracting relevant information from this email
@@ -70,30 +74,37 @@ def parse(message, config):
     data.append(message['x-Gmail-Labels'])
 
     # parse content
-    data.extend(message_body(message, config))
+    data.extend(message_body(message, config, counts))
 
     return [make_it_utf8(cell) for cell in data]
 
-def to_cvs(inboxFile):
-    count_total = 0
-    count_parsed = 0
-    inbox = mailbox.mbox(inboxFile)
-    print "Messages in file: {0}".format(len(inbox))
+def to_cvs(inboxFiles):
+    stats = []
+    for inboxFile in inboxFiles:
+        counts = {
+            'total': 0,
+            'parsed': 0,
+            'error': 0
+        }
+        print 'Loading inbox file {0}'.format(inboxFile)
+        inbox = mailbox.mbox(inboxFile)
+        total = len(inbox)
+        print "Messages in file: {0}".format(total)
 
-    for message in inbox:
-        count_total += 1
-        if count_total % 100 == 0:
-            print count_total
-        message_type = make_it_utf8(message['subject'])
-        if message_type in configuration:
-            config = configuration[message_type]
-            with open(config['file_name'], 'a') as csvfile:
-                writer = csv.writer(csvfile, quoting=csvQuoteBehaviour)
-                if not message_type in writers:
-                    writer = writers[message_type] = writer
-                    writer.writerow(config['header']) # write the header as configured
-                data = parse(message, config)
-                count_parsed += 1
-                writer.writerow(data)
-
-    print 'stats: total {0}, parsed {1}'.format(count_total, count_parsed)
+        for message in inbox:
+            counts['total'] += 1
+            if counts['total'] % 100 == 0:
+                print '{0}% - {1} of {2} - {3} errors so far'.format(math.ceil(counts['total']*100.0/total), counts['total'], total, counts['error'])
+            message_type = make_it_utf8(message['subject'])
+            if message_type in configuration:
+                config = configuration[message_type]
+                with open(config['file_name'], 'a') as csvfile:
+                    writer = csv.writer(csvfile, quoting=csvQuoteBehaviour)
+                    if not message_type in writers:
+                        writer = writers[message_type] = writer
+                        writer.writerow(config['header']) # write the header as configured
+                    data = parse(message, config, counts)
+                    counts['parsed'] += 1
+                    writer.writerow(data)
+        stats.append('{0}: total {1}, parsed {2}, errors {3}'.format(inboxFile, counts['total'], counts['parsed'], counts['error']))
+    print '\n'.join(stats)
